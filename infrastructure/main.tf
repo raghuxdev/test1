@@ -108,7 +108,7 @@ resource "azurerm_linux_virtual_machine" "web_vm" {
   name                = "web-vm"
   resource_group_name = "my-resource-group"
   location            = "East US"
-  size                = "Standard_E104ds_v5"  # ❌ UPSIZE: Standard_B1s -> Standard_D2s_v3 (WILL FAIL)
+  size                = "Standard_M416ms_v2"  # ❌ UPSIZE: Standard_B1s -> Standard_D2s_v3 (WILL FAIL)
   admin_username      = "adminuser"
 
   network_interface_ids = [
