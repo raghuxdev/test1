@@ -48,3 +48,138 @@ resource "aws_launch_template" "workers_lt" {
     }
   }
 }
+
+# ============================================
+# GCP Resources
+# ============================================
+
+resource "google_compute_instance" "app_server" {
+  name         = "app-server"
+  machine_type = "e2-micro"  # Small machine type
+  zone         = "us-central1-a"
+
+  boot_disk {
+    initialize_params {
+      image = "debian-cloud/debian-11"
+    }
+  }
+
+  network_interface {
+    network = "default"
+  }
+}
+
+resource "google_compute_instance" "db_server" {
+  name         = "db-server"
+  machine_type = "n1-standard-1"  # 1 vCPU, 3.75 GB RAM
+  zone         = "us-central1-a"
+
+  boot_disk {
+    initialize_params {
+      image = "debian-cloud/debian-11"
+    }
+  }
+
+  network_interface {
+    network = "default"
+  }
+}
+
+resource "google_compute_instance_template" "worker_template" {
+  name_prefix  = "worker-template-"
+  machine_type = "e2-small"  # Small instance
+
+  disk {
+    source_image = "debian-cloud/debian-11"
+    auto_delete  = true
+    boot         = true
+  }
+
+  network_interface {
+    network = "default"
+  }
+}
+
+# ============================================
+# Azure Resources
+# ============================================
+
+resource "azurerm_linux_virtual_machine" "web_vm" {
+  name                = "web-vm"
+  resource_group_name = "my-resource-group"
+  location            = "East US"
+  size                = "Standard_B1s"  # 1 vCPU, 1 GB RAM
+  admin_username      = "adminuser"
+
+  network_interface_ids = [
+    "nic-id-placeholder"
+  ]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+}
+
+resource "azurerm_linux_virtual_machine" "api_vm" {
+  name                = "api-vm"
+  resource_group_name = "my-resource-group"
+  location            = "East US"
+  size                = "Standard_B2s"  # 2 vCPUs, 4 GB RAM
+  admin_username      = "adminuser"
+
+  network_interface_ids = [
+    "nic-id-placeholder"
+  ]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+}
+
+resource "azurerm_linux_virtual_machine_scale_set" "worker_vmss" {
+  name                = "worker-vmss"
+  resource_group_name = "my-resource-group"
+  location            = "East US"
+  sku                 = "Standard_B1ms"  # 1 vCPU, 2 GB RAM
+  instances           = 2
+  admin_username      = "adminuser"
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  network_interface {
+    name    = "worker-nic"
+    primary = true
+
+    ip_configuration {
+      name      = "internal"
+      primary   = true
+      subnet_id = "subnet-id-placeholder"
+    }
+  }
+}
