@@ -1,9 +1,9 @@
-# Modified version - This will FAIL the policy check
-# This file upsizes multiple instance types
+# Base version - This should be committed to main branch first
+# This file uses t2.micro instance type
 
 resource "aws_instance" "web" {
   ami           = "ami-0c55b159cbfafe1f0"
-  instance_type = "t2.medium"  # ❌ UPSIZE: t2.micro -> t2.medium (WILL FAIL)
+  instance_type = "t2.micro"  # Small instance
 
   tags = {
     Name = "web-server"
@@ -13,7 +13,7 @@ resource "aws_instance" "web" {
 resource "aws_launch_template" "api" {
   name_prefix   = "api-server-"
   image_id      = "ami-0c55b159cbfafe1f0"
-  instance_type = "t2.large"  # ❌ UPSIZE: t2.small -> t2.large (WILL FAIL)
+  instance_type = "t2.small"  # Starting with small
 
   tag_specifications {
     resource_type = "instance"
@@ -39,7 +39,7 @@ resource "aws_autoscaling_group" "workers" {
 resource "aws_launch_template" "workers_lt" {
   name_prefix   = "workers-lt-"
   image_id      = "ami-0c55b159cbfafe1f0"
-  instance_type = "t3.small"  # ❌ UPSIZE: t3.micro -> t3.small (WILL FAIL)
+  instance_type = "t3.micro"  # Burstable instance
 
   tag_specifications {
     resource_type = "instance"

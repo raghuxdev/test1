@@ -1,212 +1,176 @@
-# Test Terraform Files for InfraGuard
+# InfraGuard Policy Check
 
-This directory contains test Terraform files to validate the InfraGuard policy checking functionality.
+A GitHub App that enforces infrastructure policies by analyzing Terraform configuration changes in pull requests.
 
-## Files
+## What It Does
 
-### 1. `base-version.tf`
-**Purpose**: Baseline file to commit to your main branch first
-**Instance Types**:
-- `aws_instance.web`: `t2.micro`
-- `aws_launch_template.api`: `t2.small`
-- `aws_launch_template.workers_lt`: `t3.micro`
+InfraGuard checks **pull request diffs** (not entire files) to enforce policies on infrastructure changes. It currently focuses on preventing unauthorized AWS EC2 instance type upsizing.
 
-**Action**: Commit this to `main` branch as your starting point
+### Key Features
 
----
+- Detects instance type changes in Terraform files
+- Blocks upsizing (e.g., t2.micro → t2.medium)
+- Allows downsizing (e.g., t2.medium → t2.micro)
+- Fails closed on variable references (can't evaluate dynamic values)
+- Reports violations as GitHub Check Runs on pull requests
 
-### 2. `upsize-version-WILL-FAIL.tf` ❌
-**Purpose**: Test upsize detection (policy violation)
-**Changes from base**:
-- `aws_instance.web`: `t2.micro` → `t2.medium` ❌ (upsize)
-- `aws_launch_template.api`: `t2.small` → `t2.large` ❌ (upsize)
-- `aws_launch_template.workers_lt`: `t3.micro` → `t3.small` ❌ (upsize)
+### How It Works
 
-**Expected Result**: Check run FAILS with 3 violations
+1. GitHub sends webhook when PR is opened/updated
+2. InfraGuard analyzes the diff for instance type changes
+3. Evaluates changes against policy rules
+4. Creates a Check Run showing pass/fail status
+5. Blocks merge if violations are detected
 
----
+## Supported Resources
 
-### 3. `downsize-version-WILL-PASS.tf` ✅
-**Purpose**: Test downsize allowance (policy compliant)
-**Changes from base**:
-- `aws_instance.web`: `t2.micro` → `t2.nano` ✅ (downsize)
-- `aws_launch_template.api`: `t2.small` → `t2.micro` ✅ (downsize)
-- `aws_launch_template.workers_lt`: `t3.micro` → `t3.micro` ✅ (no change)
+- `aws_instance` - EC2 instances
+- `aws_launch_template` - Launch templates (for Auto Scaling Groups)
+- `aws_autoscaling_group` - Auto scaling groups
 
-**Expected Result**: Check run PASSES
+## Instance Type Hierarchy
 
----
+The app understands instance type sizes across families:
 
-### 4. `variable-version-WILL-FAIL.tf` ❌
-**Purpose**: Test variable reference detection (fail-closed)
-**Changes from base**:
-- `aws_instance.web`: `t2.micro` → `var.instance_type` ❌ (variable)
-- `aws_launch_template.api`: `t2.small` → `var.api_instance_type` ❌ (variable)
-- `aws_launch_template.workers_lt`: `t3.micro` → `local.worker_instance_type` ❌ (local)
+**T2/T3 Series** (Burstable):
+- nano < micro < small < medium < large < xlarge < 2xlarge
 
-**Expected Result**: Check run FAILS with message about variable references
+**M5/M6i Series** (General Purpose):
+- large < xlarge < 2xlarge < 4xlarge < ... < 24xlarge
 
----
+**C5 Series** (Compute Optimized):
+- large < xlarge < 2xlarge < ... < 24xlarge
 
-### 5. `sample-diff-upsize.txt`
-**Purpose**: Example of what the GitHub webhook diff looks like
-This is what the TerraformParserService actually parses.
-
----
-
-### 6. `TESTING_GUIDE.md`
-**Purpose**: Complete step-by-step testing instructions
-Read this for full testing workflow.
-
----
+**R5 Series** (Memory Optimized):
+- large < xlarge < 2xlarge < ... < 24xlarge
 
 ## Quick Start
 
-### Before Testing - Fix Webhook Secret!
+### Prerequisites
 
-**You MUST fix the webhook secret first**, or webhooks will be rejected:
+1. GitHub App created and installed on your repository
+2. Java 17+ and Maven installed
+3. Webhook secret configured
 
+### Setup
+
+1. Clone this repository
+2. Configure webhook secret in `src/main/resources/application.properties`:
+   ```properties
+   github.webhook.secret=YOUR_WEBHOOK_SECRET
+   ```
+3. Run the application:
+   ```bash
+   ./mvnw quarkus:dev
+   ```
+
+### Testing
+
+See [TESTING_GUIDE.md](TESTING_GUIDE.md) for comprehensive testing instructions.
+
+Quick test workflow:
 ```bash
-# 1. Get secret from GitHub App settings
-open https://github.com/settings/apps/infra-guardian-triggerbird
-
-# 2. Update application.properties (line 29)
-# github.webhook.secret=${GITHUB_WEBHOOK_SECRET:YOUR_ACTUAL_SECRET}
-
-# 3. Restart app
-./mvnw quarkus:dev
-```
-
-Look for this in logs:
-```
-✅ Webhook signature validation PASSED
-```
-
----
-
-## Testing Workflow
-
-```bash
-# 1. Commit base version to main
-git checkout main
-cp test-terraform/base-version.tf infrastructure/main.tf
+# 1. Commit base infrastructure
+cp base-version.tf infrastructure/main.tf
 git add infrastructure/main.tf
 git commit -m "Add base infrastructure"
 git push origin main
 
-# 2. Create test branch with upsize
-git checkout -b test/upsize-fail
-cp test-terraform/upsize-version-WILL-FAIL.tf infrastructure/main.tf
+# 2. Create PR with upsize (should fail)
+git checkout -b test/upsize
+cp upsize-version-WILL-FAIL.tf infrastructure/main.tf
 git add infrastructure/main.tf
-git commit -m "Increase instance sizes"
-git push origin test/upsize-fail
+git commit -m "Upsize instances"
+git push origin test/upsize
 
-# 3. Create PR on GitHub
-# Expected: Check run FAILS ❌
-
-# 4. Create test branch with downsize
-git checkout main
-git checkout -b test/downsize-pass
-cp test-terraform/downsize-version-WILL-PASS.tf infrastructure/main.tf
-git add infrastructure/main.tf
-git commit -m "Reduce instance sizes"
-git push origin test/downsize-pass
-
-# 5. Create PR on GitHub
-# Expected: Check run PASSES ✅
+# 3. Open PR and check for failure
 ```
 
----
+## Test Files
 
-## What Gets Checked
+This repository includes test Terraform files:
 
-The policy checks these Terraform resources:
-- ✅ `aws_instance` - EC2 instances
-- ✅ `aws_launch_template` - Launch templates (for ASG)
-- ✅ `aws_autoscaling_group` - Auto scaling groups
+- `base-version.tf` - Baseline infrastructure (commit to main first)
+- `upsize-version-WILL-FAIL.tf` - Contains upsizes (should fail check)
+- `variable-version-WILL-FAIL.tf` - Uses variables (should fail check)
 
-For these changes:
-- ❌ **BLOCKED**: Any instance type upsize
-- ✅ **ALLOWED**: Downsizing or same size
-- ❌ **BLOCKED**: Variable references (fail-closed for security)
+## Policy Rules
 
----
+| Change Type | Example | Result |
+|-------------|---------|--------|
+| Upsize | t2.micro → t2.medium | FAIL |
+| Downsize | t2.medium → t2.micro | PASS |
+| Same size | t2.micro → t2.micro | PASS |
+| Variable reference | "t2.micro" → var.size | FAIL |
+| Cross-family upsize | t2.micro → m5.large | FAIL |
 
-## Instance Type Hierarchy
+## Architecture
 
-Supported instance types (by size tier):
+```
+GitHub Webhook
+    ↓
+WebhookController (signature validation)
+    ↓
+TerraformParserService (parse diff, extract changes)
+    ↓
+PolicyEvaluationService (evaluate against rules)
+    ↓
+GitHubCheckRunService (create Check Run)
+    ↓
+GitHub PR (show pass/fail status)
+```
 
-**T2/T3 Series** (Burstable):
-- `t2.nano` / `t3.nano` (10)
-- `t2.micro` / `t3.micro` (20)
-- `t2.small` / `t3.small` (30)
-- `t2.medium` / `t3.medium` (40)
-- `t2.large` / `t3.large` (50)
-- `t2.xlarge` / `t3.xlarge` (60)
-- `t2.2xlarge` / `t3.2xlarge` (70)
+## Configuration
 
-**M5/M6i Series** (General Purpose):
-- `m5.large` / `m6i.large` (100)
-- `m5.xlarge` / `m6i.xlarge` (110)
-- `m5.2xlarge` / `m6i.2xlarge` (120)
-- ... up to 24xlarge (170)
+Edit `src/main/resources/application.properties`:
 
-**C5 Series** (Compute Optimized):
-- `c5.large` (200)
-- ... up to `c5.24xlarge` (270)
+```properties
+# GitHub App Configuration
+github.webhook.secret=${GITHUB_WEBHOOK_SECRET}
+github.app.id=${GITHUB_APP_ID}
+github.private.key.path=${GITHUB_PRIVATE_KEY_PATH}
 
-**R5 Series** (Memory Optimized):
-- `r5.large` (300)
-- ... up to `r5.24xlarge` (370)
-
----
+# Server Configuration
+quarkus.http.port=8080
+```
 
 ## Troubleshooting
 
-### Problem: Check run always passes
+### Webhook signature validation fails
+- Verify webhook secret matches GitHub App settings
+- Restart application after updating secret
 
-**Check**:
-1. Is the webhook secret correct? (logs show signature validation passed)
-2. Are you changing the `.tf` file in a PR? (not just committing to main)
-3. Does the diff show `- instance_type = "old"` and `+ instance_type = "new"`?
-4. Check logs: `tail -f /tmp/quarkus-startup.log`
+### No check run appears
+- Confirm GitHub App is installed on repository
+- Verify app has "Checks: Write" permission
+- Check webhook delivery logs in GitHub App settings
 
-### Problem: No check run appears
+### Check always passes when it should fail
+- Ensure you're creating a PR (not just committing)
+- Verify files have `.tf` extension
+- Check application logs for parsing errors
 
-**Check**:
-1. Is the GitHub App installed on the repo?
-2. Is the app subscribed to `pull_request` events?
-3. Is the webhook URL correct?
-4. Check GitHub App webhook delivery logs
+## Development
 
-### Problem: Signature validation fails
+### Build
+```bash
+./mvnw clean package
+```
 
-**Fix**:
-1. Get the EXACT secret from GitHub App settings
-2. Update `application.properties` line 29
-3. Restart the app
-4. Test again
+### Run tests
+```bash
+./mvnw test
+```
 
----
+### View logs
+```bash
+tail -f /tmp/quarkus-startup.log
+```
 
-## Files Summary
+## License
 
-| File | Purpose | Expected Result |
-|------|---------|-----------------|
-| `base-version.tf` | Starting point | Commit to main |
-| `upsize-version-WILL-FAIL.tf` | Test blocking | ❌ Check FAILS |
-| `downsize-version-WILL-PASS.tf` | Test allowing | ✅ Check PASSES |
-| `variable-version-WILL-FAIL.tf` | Test fail-closed | ❌ Check FAILS |
+[Your License Here]
 
----
+## Contributing
 
-## Next Steps
-
-1. ✅ Fix webhook secret
-2. ✅ Create test repository
-3. ✅ Install GitHub App on test repo
-4. ✅ Follow testing workflow above
-5. ✅ Verify check runs appear correctly
-6. ✅ Deploy to production
-
-For detailed instructions, see `TESTING_GUIDE.md`.
+[Your Contributing Guidelines Here]

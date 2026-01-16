@@ -44,7 +44,7 @@ Before testing, you MUST fix the webhook signature validation:
 **Steps**:
 1. **On main branch**: Commit `base-version.tf`
    ```bash
-   cp test-terraform/base-version.tf infrastructure/main.tf
+   cp base-version.tf infrastructure/main.tf
    git add infrastructure/main.tf
    git commit -m "Add base infrastructure"
    git push origin main
@@ -57,7 +57,7 @@ Before testing, you MUST fix the webhook signature validation:
 
 3. **Make changes**: Copy the upsize version
    ```bash
-   cp test-terraform/upsize-version-WILL-FAIL.tf infrastructure/main.tf
+   cp upsize-version-WILL-FAIL.tf infrastructure/main.tf
    ```
 
 4. **Commit and push**:
@@ -85,6 +85,8 @@ Before testing, you MUST fix the webhook signature validation:
 
 ### Step 4: Test Scenario 2 - Downsize (SHOULD PASS)
 
+**Note**: The `downsize-version-WILL-PASS.tf` file is currently missing from the repository. You'll need to create this file or manually edit `infrastructure/main.tf` to downsize instance types for this test.
+
 **Goal**: Allow instance type downsizing
 
 **Steps**:
@@ -96,7 +98,7 @@ Before testing, you MUST fix the webhook signature validation:
 
 2. **Make changes**:
    ```bash
-   cp test-terraform/downsize-version-WILL-PASS.tf infrastructure/main.tf
+   cp downsize-version-WILL-PASS.tf infrastructure/main.tf
    ```
 
 3. **Commit and push**:
@@ -135,7 +137,7 @@ Before testing, you MUST fix the webhook signature validation:
 
 2. **Make changes**:
    ```bash
-   cp test-terraform/variable-version-WILL-FAIL.tf infrastructure/main.tf
+   cp variable-version-WILL-FAIL.tf infrastructure/main.tf
    ```
 
 3. **Commit and push**:
