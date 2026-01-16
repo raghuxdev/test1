@@ -3,7 +3,7 @@
 
 resource "aws_instance" "web" {
   ami           = "ami-0c55b159cbfafe1f0"
-  instance_type = "t2.micro"  # Small instance
+  instance_type = "t2.medium"  # ❌ UPSIZE: t2.micro -> t2.medium (WILL FAIL)
 
   tags = {
     Name = "web-server"
@@ -13,7 +13,7 @@ resource "aws_instance" "web" {
 resource "aws_launch_template" "api" {
   name_prefix   = "api-server-"
   image_id      = "ami-0c55b159cbfafe1f0"
-  instance_type = "t2.small"  # Starting with small
+  instance_type = "t2.large"  # ❌ UPSIZE: t2.small -> t2.large (WILL FAIL)
 
   tag_specifications {
     resource_type = "instance"
@@ -39,7 +39,7 @@ resource "aws_autoscaling_group" "workers" {
 resource "aws_launch_template" "workers_lt" {
   name_prefix   = "workers-lt-"
   image_id      = "ami-0c55b159cbfafe1f0"
-  instance_type = "t3.micro"  # Burstable instance
+  instance_type = "t3.small"  # ❌ UPSIZE: t3.micro -> t3.small (WILL FAIL)
 
   tag_specifications {
     resource_type = "instance"
