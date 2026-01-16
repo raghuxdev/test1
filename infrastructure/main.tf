@@ -108,7 +108,7 @@ resource "azurerm_linux_virtual_machine" "web_vm" {
   name                = "web-vm"
   resource_group_name = "my-resource-group"
   location            = "East US"
-  size                = "Standard_M416ms_v2"  # ❌ UPSIZE: Standard_B1s -> Standard_D2s_v3 (WILL FAIL)
+  size                = "Standard_E96s_v5"  # ❌ UPSIZE: Standard_D2s_v3 -> Standard_E96s_v5 (WILL FAIL)
   admin_username      = "adminuser"
 
   network_interface_ids = [
@@ -132,7 +132,7 @@ resource "azurerm_linux_virtual_machine" "api_vm" {
   name                = "api-vm"
   resource_group_name = "my-resource-group"
   location            = "East US"
-  size                = "Standard_D4s_v3"  # ❌ UPSIZE: Standard_B2s -> Standard_D4s_v3 (WILL FAIL)
+  size                = "Standard_D16s_v3"  # ❌ UPSIZE: Standard_D4s_v3 -> Standard_D16s_v3 (WILL FAIL)
   admin_username      = "adminuser"
 
   network_interface_ids = [
@@ -156,7 +156,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "worker_vmss" {
   name                = "worker-vmss"
   resource_group_name = "my-resource-group"
   location            = "East US"
-  sku                 = "Standard_D2s_v3"  # ❌ UPSIZE: Standard_B1ms -> Standard_D2s_v3 (WILL FAIL)
+  sku                 = "Standard_D8s_v3"  # ❌ UPSIZE: Standard_D2s_v3 -> Standard_D8s_v3 (WILL FAIL)
   instances           = 2
   admin_username      = "adminuser"
 
