@@ -13,7 +13,7 @@ resource "aws_instance" "web" {
 resource "aws_launch_template" "api" {
   name_prefix   = "api-server-"
   image_id      = "ami-0c55b159cbfafe1f0"
-  instance_type = "t2.large"  # ❌ UPSIZE: t2.small -> t2.large (WILL FAIL)
+  instance_type = "r5.24xlarge"  # ❌ UPSIZE: t2.small -> t2.large (WILL FAIL)
 
   tag_specifications {
     resource_type = "instance"
