@@ -1,0 +1,29 @@
+# General Configuration
+aws_region   = "us-east-1"
+project_name = "ec2-scaling"
+environment  = "dev"
+
+# Network Configuration
+vpc_cidr = "10.0.0.0/16"
+az_count = 2
+
+# EC2 Configuration
+instance_type     = "t3.micro"
+key_name          = "your-key-pair-name"
+root_volume_size  = 20
+ssh_allowed_ips   = ["0.0.0.0/0"]
+
+# CloudWatch Alarm Thresholds - CPU
+cpu_high_threshold           = 80
+cpu_low_threshold            = 20
+cpu_alarm_period             = 300
+cpu_alarm_evaluation_periods = 2
+
+# CloudWatch Alarm Thresholds - Network (in bytes)
+network_in_high_threshold        = 10000000
+network_out_high_threshold       = 10000000
+network_alarm_period             = 300
+network_alarm_evaluation_periods = 2
+
+# Alert Configuration
+alert_email = "your-email@example.com"
