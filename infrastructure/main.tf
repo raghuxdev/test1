@@ -55,7 +55,7 @@ resource "aws_launch_template" "workers_lt" {
 
 resource "google_compute_instance" "app_server" {
   name         = "app-server"
-  machine_type = "e2-micro"  # Small machine type
+  machine_type = "e2-medium"  # ❌ UPSIZE: e2-micro -> e2-medium (WILL FAIL)
   zone         = "us-central1-a"
 
   boot_disk {
@@ -71,7 +71,7 @@ resource "google_compute_instance" "app_server" {
 
 resource "google_compute_instance" "db_server" {
   name         = "db-server"
-  machine_type = "n1-standard-1"  # 1 vCPU, 3.75 GB RAM
+  machine_type = "n1-standard-4"  # ❌ UPSIZE: n1-standard-1 -> n1-standard-4 (WILL FAIL)
   zone         = "us-central1-a"
 
   boot_disk {
@@ -87,7 +87,7 @@ resource "google_compute_instance" "db_server" {
 
 resource "google_compute_instance_template" "worker_template" {
   name_prefix  = "worker-template-"
-  machine_type = "e2-small"  # Small instance
+  machine_type = "e2-standard-2"  # ❌ UPSIZE: e2-small -> e2-standard-2 (WILL FAIL)
 
   disk {
     source_image = "debian-cloud/debian-11"
@@ -108,7 +108,7 @@ resource "azurerm_linux_virtual_machine" "web_vm" {
   name                = "web-vm"
   resource_group_name = "my-resource-group"
   location            = "East US"
-  size                = "Standard_B1s"  # 1 vCPU, 1 GB RAM
+  size                = "Standard_D2s_v3"  # ❌ UPSIZE: Standard_B1s -> Standard_D2s_v3 (WILL FAIL)
   admin_username      = "adminuser"
 
   network_interface_ids = [
@@ -132,7 +132,7 @@ resource "azurerm_linux_virtual_machine" "api_vm" {
   name                = "api-vm"
   resource_group_name = "my-resource-group"
   location            = "East US"
-  size                = "Standard_B2s"  # 2 vCPUs, 4 GB RAM
+  size                = "Standard_D4s_v3"  # ❌ UPSIZE: Standard_B2s -> Standard_D4s_v3 (WILL FAIL)
   admin_username      = "adminuser"
 
   network_interface_ids = [
@@ -156,7 +156,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "worker_vmss" {
   name                = "worker-vmss"
   resource_group_name = "my-resource-group"
   location            = "East US"
-  sku                 = "Standard_B1ms"  # 1 vCPU, 2 GB RAM
+  sku                 = "Standard_D2s_v3"  # ❌ UPSIZE: Standard_B1ms -> Standard_D2s_v3 (WILL FAIL)
   instances           = 2
   admin_username      = "adminuser"
 
