@@ -3,7 +3,7 @@
 
 resource "aws_instance" "web" {
   ami           = "ami-0c55b159cbfafe1f0"
-  instance_type = "m5.large"  # ❌ UPSIZE: t2.micro -> t2.medium (WILL FAIL)
+  instance_type = "t2.large"  # ❌ UPSIZE: t2.micro -> t2.medium (WILL FAIL)
 
   tags = {
     Name = "web-server"
