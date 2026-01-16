@@ -132,7 +132,7 @@ resource "azurerm_linux_virtual_machine" "api_vm" {
   name                = "api-vm"
   resource_group_name = "my-resource-group"
   location            = "East US"
-  size                = "Standard_D16s_v3"  # ❌ UPSIZE: Standard_D4s_v3 -> Standard_D16s_v3 (WILL FAIL)
+  size                = "Standard_D96as_v6"  # ❌ UPSIZE: Standard_D4s_v3 -> Standard_D16s_v3 (WILL FAIL)
   admin_username      = "adminuser"
 
   network_interface_ids = [
