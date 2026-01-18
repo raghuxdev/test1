@@ -55,7 +55,7 @@ resource "aws_launch_template" "workers_lt" {
 
 resource "google_compute_instance" "app_server" {
   name         = "app-server"
-  machine_type = "e2-medium"  # ❌ UPSIZE: e2-micro -> e2-medium (WILL FAIL)
+  machine_type = "n1-standard-1"  # ❌ UPSIZE: e2-micro -> e2-medium (WILL FAIL)
   zone         = "us-central1-a"
 
   boot_disk {
